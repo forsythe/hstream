@@ -1,20 +1,32 @@
 package com.forsythe.stage;
 
 import com.forsythe.Sink;
+import com.forsythe.stage.TerminalStage.TerminalConsumerStage;
+import com.forsythe.stage.TerminalStage.TerminalOperatorStage;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 import java.util.function.ToIntBiFunction;
 
-public abstract class OperatorStage implements HStream {
+/**
+ * Represents a stage of the stream that takes some input and potentially produces some output
+ */
+public abstract class Stage implements HStream {
     protected Sink downstream;
 
     @Override
+    public void onComplete() {
+        downstream.onComplete();
+    }
+
+    @Override
     public HStream map(IntUnaryOperator mapper) {
-        OperatorStage nonterminalStage = new StatelessOperator(this) {
+        Stage op = new OperatorStage(this) {
             /**
              * Called by my upstream. I should accept the value and pass to downstream sink
              */
@@ -23,13 +35,13 @@ public abstract class OperatorStage implements HStream {
                 this.downstream.accept(mapper.applyAsInt(value));
             }
         };
-        this.downstream = nonterminalStage;
-        return nonterminalStage;
+        this.downstream = op;
+        return op;
     }
 
     @Override
     public HStream filter(IntPredicate predicate) {
-        OperatorStage nonterminalStage = new StatelessOperator(this) {
+        Stage op = new OperatorStage(this) {
 
             /**
              * Called by my upstream. I should accept the value, and filter it to my downstream
@@ -41,8 +53,30 @@ public abstract class OperatorStage implements HStream {
                 }
             }
         };
-        this.downstream = nonterminalStage;
-        return nonterminalStage;
+        this.downstream = op;
+        return op;
+    }
+
+    @Override
+    public HStream sorted(Comparator<Integer> comparator) {
+        Stage op = new OperatorStage(this) {
+            PriorityQueue<Integer> heap = new PriorityQueue<>(comparator);
+
+            @Override
+            public void accept(int i) {
+                heap.add(i);
+            }
+
+            @Override
+            public void onComplete() {
+                while (!heap.isEmpty()) {
+                    this.downstream.accept(heap.remove());
+                }
+                downstream.onComplete();
+            }
+        };
+        this.downstream = op;
+        return op;
     }
 
     @Override
@@ -112,12 +146,21 @@ public abstract class OperatorStage implements HStream {
         return tes.getResult();
     }
 
+    /**
+     * Used to trigger the upstream stage's evaluate. Eventually calls the {@link HeadStage}'s
+     * {@link HeadStage#accept(int)}, which triggers the whole pipeline of execution
+     */
     protected abstract void evaluate();
 
-    private abstract static class StatelessOperator extends OperatorStage {
-        private final OperatorStage upstream;
 
-        protected StatelessOperator(OperatorStage upstream) {
+    /**
+     * An abstract class representing an intermediate stage that takes some input, and produces
+     * some output deterministically. should be pure function
+     */
+    private abstract static class OperatorStage extends Stage {
+        private final Stage upstream;
+
+        protected OperatorStage(Stage upstream) {
             this.upstream = upstream;
         }
 
@@ -127,7 +170,13 @@ public abstract class OperatorStage implements HStream {
         }
     }
 
-    static abstract class HeadStage extends OperatorStage {
+
+    /**
+     * An abstract class that should be overridden for initializing a stream. The {@link Stage#evaluate()} method
+     * should be overridden in such a way as to consume the input correctly from the constructor of HeadStage's derived
+     * classes
+     */
+    static abstract class HeadStage extends Stage {
         public final void accept(int i) {
             downstream.accept(i);
         }

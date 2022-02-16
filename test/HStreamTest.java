@@ -23,6 +23,13 @@ class HStreamTest {
     }
 
     @Test
+    void sorted() {
+        HStream stream = HStream.fromRange(1, 10);
+        List<Integer> output = stream.map(x -> x * x).map(x -> x % 2 == 0 ? x : -x).sorted().map(x -> x * 10).toList();
+        assertEquals(List.of(-810, -490, -250, -90, -10, 40, 160, 360, 640), output);
+    }
+
+    @Test
     void forEach() {
         HStream stream = HStream.fromRange(-3, 3);
         Set<Integer> vals = new HashSet<>();
