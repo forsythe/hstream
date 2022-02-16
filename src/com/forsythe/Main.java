@@ -15,7 +15,7 @@ public class Main {
                 .peek()
                 .sorted()
                 .peek()
-                .filter(x->Math.abs(x) <= 70)
+                .filter(x -> Math.abs(x) <= 70)
                 .peek()
                 .map(x -> x * 10)
                 .peek()

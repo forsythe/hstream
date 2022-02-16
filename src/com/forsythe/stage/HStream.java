@@ -14,31 +14,6 @@ import java.util.function.ToIntBiFunction;
  */
 public interface HStream extends Sink {
     /**
-     * Nonterminal operations
-     **/
-    HStream map(IntUnaryOperator mapper);
-    HStream peek();
-
-    HStream filter(IntPredicate predicate);
-
-    HStream sorted(Comparator<Integer> comparator);
-
-    default HStream sorted() {
-        return sorted(Integer::compare);
-    }
-
-    /**
-     * Terminal operations
-     **/
-    void forEach(IntConsumer consumer);
-
-    int reduce(int identity, ToIntBiFunction<Integer, Integer> toIntBiFunction);
-
-    int sum();
-
-    List<Integer> toList();
-
-    /**
      * Static factory methods
      **/
     static HStream fromList(List<Integer> list) {
@@ -74,4 +49,30 @@ public interface HStream extends Sink {
             }
         };
     }
+
+    /**
+     * Nonterminal operations
+     **/
+    HStream map(IntUnaryOperator mapper);
+
+    HStream peek();
+
+    HStream filter(IntPredicate predicate);
+
+    HStream sorted(Comparator<Integer> comparator);
+
+    default HStream sorted() {
+        return sorted(Integer::compare);
+    }
+
+    /**
+     * Terminal operations
+     **/
+    void forEach(IntConsumer consumer);
+
+    int reduce(int identity, ToIntBiFunction<Integer, Integer> toIntBiFunction);
+
+    int sum();
+
+    List<Integer> toList();
 }

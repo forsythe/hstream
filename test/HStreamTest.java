@@ -1,4 +1,3 @@
-
 import com.forsythe.stage.HStream;
 import org.junit.jupiter.api.Test;
 
