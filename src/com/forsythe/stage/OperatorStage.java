@@ -2,9 +2,12 @@ package com.forsythe.stage;
 
 import com.forsythe.Sink;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
+import java.util.function.ToIntBiFunction;
 
 public abstract class OperatorStage implements HStream {
     protected Sink downstream;
@@ -50,11 +53,11 @@ public abstract class OperatorStage implements HStream {
 
     @Override
     public int sum() {
-        TerminalOperatorStage tes = new TerminalOperatorStage() {
+        TerminalOperatorStage<Integer> tes = new TerminalOperatorStage<>() {
             int total = 0;
 
             @Override
-            public int getResult() {
+            public Integer getResult() {
                 return total;
             }
 
@@ -65,6 +68,46 @@ public abstract class OperatorStage implements HStream {
         };
         this.downstream = tes;
 
+        evaluate();
+        return tes.getResult();
+    }
+
+    @Override
+    public int reduce(int identity, ToIntBiFunction<Integer, Integer> toIntBiFunction) {
+        TerminalOperatorStage<Integer> tes = new TerminalOperatorStage<>() {
+            int value = identity;
+
+            @Override
+            public Integer getResult() {
+                return value;
+            }
+
+            @Override
+            public void accept(int i) {
+                value = toIntBiFunction.applyAsInt(value, i);
+            }
+        };
+        this.downstream = tes;
+        evaluate();
+        return tes.getResult();
+    }
+
+    @Override
+    public List<Integer> toList() {
+        TerminalOperatorStage<List<Integer>> tes = new TerminalOperatorStage<>() {
+            List<Integer> output = new ArrayList<>();
+
+            @Override
+            public List<Integer> getResult() {
+                return output;
+            }
+
+            @Override
+            public void accept(int i) {
+                output.add(i);
+            }
+        };
+        this.downstream = tes;
         evaluate();
         return tes.getResult();
     }
@@ -84,22 +127,8 @@ public abstract class OperatorStage implements HStream {
         }
     }
 
-    static final class HeadStage extends OperatorStage {
-        private final Iterable<Integer> iterable;
-
-        public HeadStage(Iterable<Integer> iterable) {
-            this.iterable = iterable;
-        }
-
-        @Override
-        public void evaluate() {
-            for (int i : iterable) {
-                this.accept(i);
-            }
-        }
-
-        @Override
-        public void accept(int i) {
+    static abstract class HeadStage extends OperatorStage {
+        public final void accept(int i) {
             downstream.accept(i);
         }
     }
