@@ -12,5 +12,5 @@ public interface Sink {
      * <p>
      * In that case, the sort stage will wait until this function is called
      */
-    void onComplete();
+    void onReadyForNextStage();
 }

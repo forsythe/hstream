@@ -2,9 +2,10 @@ package com.forsythe.stage;
 
 import com.forsythe.Sink;
 
-public interface TerminalStage extends Sink {
+public abstract class TerminalStage implements Sink {
+
     @Override
-    default void onComplete() {
+    public final void onReadyForNextStage() {
         //no-op
     }
 
@@ -13,13 +14,13 @@ public interface TerminalStage extends Sink {
      *
      * @param <OUTPUT> the type of the output being produced
      */
-    interface TerminalOperatorStage<OUTPUT> extends TerminalStage {
-        OUTPUT getResult();
+    abstract static class TerminalOperatorStage<OUTPUT> extends TerminalStage {
+        abstract OUTPUT getResult();
     }
 
     /**
      * A terminal stage that consumes the output and produces nothing
      */
-    interface TerminalConsumerStage extends TerminalStage {
+    abstract static class TerminalConsumerStage extends TerminalStage {
     }
 }

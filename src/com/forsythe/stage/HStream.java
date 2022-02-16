@@ -44,11 +44,10 @@ public interface HStream extends Sink {
         return new Stage.HeadStage() {
 
             @Override
-            protected void evaluate() {
+            protected void loadData() {
                 for (int i : list) {
                     accept(i);
                 }
-                downstream.onComplete();
             }
         };
     }
@@ -56,11 +55,10 @@ public interface HStream extends Sink {
     static HStream fromVarArgs(int... nums) {
         return new Stage.HeadStage() {
             @Override
-            protected void evaluate() {
+            protected void loadData() {
                 for (int i : nums) {
                     accept(i);
                 }
-                downstream.onComplete();
             }
         };
     }
@@ -68,11 +66,10 @@ public interface HStream extends Sink {
     static HStream fromRange(int fromIncl, int toExcl) {
         return new Stage.HeadStage() {
             @Override
-            protected void evaluate() {
+            protected void loadData() {
                 for (int i = fromIncl; i < toExcl; i++) {
                     accept(i);
                 }
-                downstream.onComplete();
             }
         };
     }

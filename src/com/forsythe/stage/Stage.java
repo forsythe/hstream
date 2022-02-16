@@ -19,14 +19,10 @@ import java.util.function.ToIntBiFunction;
 public abstract class Stage implements HStream {
     protected Sink downstream;
 
-    @Override
-    public void onComplete() {
-        downstream.onComplete();
-    }
 
     @Override
     public HStream map(IntUnaryOperator mapper) {
-        Stage op = new OperatorStage(this) {
+        Stage op = new StatelessStage(this) {
             /**
              * Called by my upstream. I should accept the value and pass to downstream sink
              */
@@ -41,7 +37,7 @@ public abstract class Stage implements HStream {
 
     @Override
     public HStream filter(IntPredicate predicate) {
-        Stage op = new OperatorStage(this) {
+        Stage op = new StatelessStage(this) {
 
             /**
              * Called by my upstream. I should accept the value, and filter it to my downstream
@@ -59,7 +55,7 @@ public abstract class Stage implements HStream {
 
     @Override
     public HStream sorted(Comparator<Integer> comparator) {
-        Stage op = new OperatorStage(this) {
+        Stage op = new StatefulStage(this) {
             PriorityQueue<Integer> heap = new PriorityQueue<>(comparator);
 
             @Override
@@ -68,11 +64,11 @@ public abstract class Stage implements HStream {
             }
 
             @Override
-            public void onComplete() {
+            public void onReadyForNextStage() {
                 while (!heap.isEmpty()) {
                     this.downstream.accept(heap.remove());
                 }
-                downstream.onComplete();
+                downstream.onReadyForNextStage();
             }
         };
         this.downstream = op;
@@ -81,7 +77,12 @@ public abstract class Stage implements HStream {
 
     @Override
     public void forEach(IntConsumer consumer) {
-        this.downstream = (TerminalConsumerStage) consumer::accept;
+        this.downstream = new TerminalConsumerStage() {
+            @Override
+            public void accept(int i) {
+                consumer.accept(i);
+            }
+        };
         evaluate();
     }
 
@@ -101,7 +102,6 @@ public abstract class Stage implements HStream {
             }
         };
         this.downstream = tes;
-
         evaluate();
         return tes.getResult();
     }
@@ -157,10 +157,33 @@ public abstract class Stage implements HStream {
      * An abstract class representing an intermediate stage that takes some input, and produces
      * some output deterministically. should be pure function
      */
-    private abstract static class OperatorStage extends Stage {
+    private abstract static class StatelessStage extends Stage {
         private final Stage upstream;
 
-        protected OperatorStage(Stage upstream) {
+        protected StatelessStage(Stage upstream) {
+            this.upstream = upstream;
+        }
+
+        @Override
+        public void evaluate() {
+            this.upstream.evaluate();
+        }
+
+        @Override
+        public final void onReadyForNextStage() {
+            downstream.onReadyForNextStage();
+        }
+    }
+
+    /**
+     * An abstract class representing an intermediate stage that takes some input, and produces
+     * some output, but maintains state. Therefore it awaits {@link #onReadyForNextStage()} before
+     * finalizing its output and triggering downstream's {@link #onReadyForNextStage()}
+     */
+    private abstract static class StatefulStage extends Stage {
+        private final Stage upstream;
+
+        protected StatefulStage(Stage upstream) {
             this.upstream = upstream;
         }
 
@@ -177,8 +200,25 @@ public abstract class Stage implements HStream {
      * classes
      */
     static abstract class HeadStage extends Stage {
+        @Override
         public final void accept(int i) {
             downstream.accept(i);
         }
+
+        @Override
+        public final void onReadyForNextStage() {
+            //no-op, since nobody can tell us we're ready
+        }
+
+        @Override
+        public final void evaluate() {
+            this.loadData();
+            downstream.onReadyForNextStage();
+        }
+
+        /**
+         * This function should be overridden to load the input from list/array/whatever
+         */
+        protected abstract void loadData();
     }
 }
