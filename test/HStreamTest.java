@@ -2,6 +2,8 @@
 import com.forsythe.stage.HStream;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -27,6 +29,35 @@ class HStreamTest {
         HStream stream = HStream.fromRange(1, 10);
         List<Integer> output = stream.map(x -> x * x).map(x -> x % 2 == 0 ? x : -x).sorted().map(x -> x * 10).toList();
         assertEquals(List.of(-810, -490, -250, -90, -10, 40, 160, 360, 640), output);
+    }
+
+    @Test
+    void peek() {
+        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(outContent));
+        HStream stream = HStream.fromRange(1, 10);
+        List<Integer> output = stream
+                .peek()
+                .map(x -> x * x)
+                .peek()
+                .map(x -> x % 2 == 0 ? x : -x)
+                .peek()
+                .sorted()
+                .peek()
+                .filter(x -> Math.abs(x) <= 70)
+                .peek()
+                .map(x -> x * 10)
+                .peek()
+                .toList();
+        String expected = "1 2 3 4 5 6 7 8 9\r\n" +
+                "1 4 9 16 25 36 49 64 81\r\n" +
+                "-1 4 -9 16 -25 36 -49 64 -81\r\n" +
+                "-81 -49 -25 -9 -1 4 16 36 64\r\n" +
+                "-49 -25 -9 -1 4 16 36 64\r\n" +
+                "-490 -250 -90 -10 40 160 360 640\r\n";
+        assertEquals(expected, outContent.toString());
+        System.setOut(System.out);
+
     }
 
     @Test

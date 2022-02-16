@@ -17,6 +17,7 @@ public interface HStream extends Sink {
      * Nonterminal operations
      **/
     HStream map(IntUnaryOperator mapper);
+    HStream peek();
 
     HStream filter(IntPredicate predicate);
 

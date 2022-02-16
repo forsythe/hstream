@@ -12,6 +12,7 @@ import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 import java.util.function.ToIntBiFunction;
+import java.util.stream.Collectors;
 
 /**
  * Represents a stage of the stream that takes some input and potentially produces some output
@@ -29,6 +30,29 @@ public abstract class Stage implements HStream {
             @Override
             public void accept(int value) {
                 this.downstream.accept(mapper.applyAsInt(value));
+            }
+        };
+        this.downstream = op;
+        return op;
+    }
+
+    @Override
+    public HStream peek() {
+        Stage op = new StatefulStage(this) {
+            List<Integer> values = new ArrayList<>();
+
+            @Override
+            public void accept(int value) {
+                values.add(value);
+            }
+
+            @Override
+            public void onReadyForNextStage() {
+                System.out.println(values.stream().map(String::valueOf).collect(Collectors.joining(" ")));
+                for (int i : values) {
+                    downstream.accept(i);
+                }
+                downstream.onReadyForNextStage();
             }
         };
         this.downstream = op;
