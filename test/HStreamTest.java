@@ -39,7 +39,7 @@ class HStreamTest {
     @Test
     void limit() {
         HStream stream = HStream.fromRange(1, 10);
-        List<Integer> output = stream.flatMap(x -> HStream.fromVarArgs(-x, x)).limit(5).peek().toList();
+        List<Integer> output = stream.flatMap(x -> HStream.of(-x, x)).limit(5).peek().toList();
         assertEquals(List.of(-1, 1, -2, 2, -3), output);
     }
 
@@ -99,19 +99,19 @@ class HStreamTest {
 
     @Test
     void toList() {
-        HStream stream = HStream.fromVarArgs(1, 2, 3, 4);
+        HStream stream = HStream.of(1, 2, 3, 4);
         assertEquals(List.of(1, 2, 3, 4), stream.toList());
     }
 
     @Test
     void maxMin() {
-        HStream hStream = HStream.fromVarArgs(-10, Integer.MAX_VALUE);
+        HStream hStream = HStream.of(-10, Integer.MAX_VALUE);
         assertEquals(Integer.MAX_VALUE, hStream.max().orElse(-1));
         assertEquals(-10, hStream.min().orElse(1));
-        HStream empty = HStream.fromVarArgs();
+        HStream empty = HStream.of();
         assertFalse(empty.max().isPresent());
         assertFalse(empty.min().isPresent());
-        HStream twoNegatives = HStream.fromVarArgs(-10, -5);
+        HStream twoNegatives = HStream.of(-10, -5);
         assertEquals(-5, twoNegatives.max().orElse(-1));
         assertEquals(-10, twoNegatives.min().orElse(-1));
     }
@@ -125,11 +125,19 @@ class HStreamTest {
     }
 
     @Test
-    void fromVarArgs() {
-        HStream stream = HStream.fromVarArgs(-2, 0, 2, Integer.MAX_VALUE);
+    void of() {
+        HStream stream = HStream.of(-2, 0, 2, Integer.MAX_VALUE);
         assertEquals(List.of(-2, 0, 2, Integer.MAX_VALUE), stream.toList());
     }
 
+    @Test
+    void concat() {
+        HStream evens = HStream.fromRange(0, 10).filter(x -> x % 2 == 0);
+        HStream odds = HStream.fromRange(0, 10).filter(x -> x % 2 != 0);
+        HStream combined = HStream.concat(evens, odds);
+        assertEquals(List.of(0, 2, 4, 6, 8, 1, 3, 5, 7, 9), combined.toList());
+        assertEquals(HStream.fromRange(0, 10).toList(), combined.sorted().toList());
+    }
 
     @Test
     void fromRange() {
@@ -146,7 +154,7 @@ class HStreamTest {
 
     @Test
     void emptyList() {
-        HStream stream = HStream.fromVarArgs();
+        HStream stream = HStream.of();
         assertTrue(stream.map(x -> x * x).filter(x -> x % 2 != 0).toList().isEmpty());
     }
 }

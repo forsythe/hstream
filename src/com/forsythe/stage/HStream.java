@@ -2,8 +2,13 @@ package com.forsythe.stage;
 
 import com.forsythe.Sink;
 
-import java.util.*;
-import java.util.function.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.IntPredicate;
+import java.util.function.IntUnaryOperator;
+import java.util.function.ToIntBiFunction;
 
 /**
  * The interface the user expects when given a stream
@@ -25,12 +30,26 @@ public interface HStream extends Sink, Iterable<Integer> {
         };
     }
 
-    static HStream fromVarArgs(int... nums) {
+    static HStream of(int... nums) {
         return new Stage.HeadStage() {
             @Override
             protected void loadData() {
                 for (int i : nums) {
                     accept(i);
+                }
+            }
+        };
+    }
+
+    static HStream concat(HStream first, HStream second) {
+        return new Stage.HeadStage() {
+            @Override
+            protected void loadData() {
+                for (int i : first) {
+                    downstream.accept(i);
+                }
+                for (int j : second) {
+                    downstream.accept(j);
                 }
             }
         };
