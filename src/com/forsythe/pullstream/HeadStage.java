@@ -1,9 +1,16 @@
 package com.forsythe.pullstream;
 
-public abstract class HeadStage extends Stage {
+import javax.crypto.spec.PSource;
+
+public class HeadStage extends Stage {
 
     public HeadStage(Source upstream) {
         super(upstream);
+    }
+
+    @Override
+    public boolean hasNext() {
+        return upstream.hasNext();
     }
 
     @Override

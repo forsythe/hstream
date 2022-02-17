@@ -1,7 +1,9 @@
 package com.forsythe.pullstream;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 
@@ -18,6 +20,11 @@ public abstract class Stage implements PullStream {
             @Override
             public int getNext() {
                 return mapper.applyAsInt(upstream.getNext());
+            }
+
+            @Override
+            public boolean hasNext() {
+                return upstream.hasNext();
             }
         };
     }
@@ -60,6 +67,45 @@ public abstract class Stage implements PullStream {
     }
 
     @Override
+    public PullStream sorted(Comparator<Integer> comparator) {
+        return new Stage(this) {
+            PriorityQueue<Integer> pq = new PriorityQueue<>(comparator);
+
+            @Override
+            public int getNext() {
+                return pq.remove();
+            }
+
+            @Override
+            public boolean hasNext() {
+                while (upstream.hasNext()) {
+                    pq.add(upstream.getNext());
+                }
+                return !pq.isEmpty();
+            }
+        };
+    }
+
+    @Override
+    public PullStream limit(int limit) {
+        return new Stage(this) {
+            int remaining = limit;
+
+            @Override
+            public int getNext() {
+                remaining--;
+                return upstream.getNext();
+            }
+
+
+            @Override
+            public boolean hasNext() {
+                return remaining > 0 && upstream.hasNext();
+            }
+        };
+    }
+
+    @Override
     public List<Integer> toList() {
         List<Integer> ans = new ArrayList<>();
         while (hasNext()) {
@@ -68,8 +114,4 @@ public abstract class Stage implements PullStream {
         return ans;
     }
 
-    @Override
-    public boolean hasNext() {
-        return upstream.hasNext();
-    }
 }
