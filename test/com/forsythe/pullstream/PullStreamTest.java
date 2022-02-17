@@ -144,4 +144,22 @@ class PullStreamTest {
         PullStream empty = PullStream.fromList(List.of());
         assertEquals(0, count.count());
     }
+
+    @Test
+    void fibonacci() {
+        final int[] prev = new int[]{0};
+        List<Integer> fib = PullStream.generator(1, (cur) -> {
+            int temp = prev[0];
+            prev[0] = cur;
+            return cur + temp;
+        }).limit(10).toList();
+        assertEquals(List.of(1, 1, 2, 3, 5, 8, 13, 21, 34, 55), fib);
+
+//        PullStream.generator(1, (cur) -> {
+//            int temp = prev[0];
+//            prev[0] = cur;
+//            return cur + temp;
+//        }).takeWhile(x -> x < Integer.MAX_VALUE / 2).
+//                forEach(System.out::println);
+    }
 }
