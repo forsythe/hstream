@@ -154,6 +154,43 @@ public abstract class Stage implements PullStream {
     }
 
     @Override
+    public PullStream takeWhile(IntPredicate pred) {
+        return new Stage(this) {
+            boolean dead = false;
+            boolean holdingValidValue = false;
+            int value = -1;
+
+            @Override
+            public int getNext() {
+                if (!holdingValidValue || dead)
+                    throw new RuntimeException("takeWhile not holding a valid value");
+
+                holdingValidValue = false;
+                return value;
+            }
+
+            @Override
+            public boolean hasNext() {
+                if (dead)
+                    return false;
+                if (holdingValidValue)
+                    return true;
+                if (!upstream.hasNext())
+                    return false;
+                int upstreamVal = upstream.getNext();
+                if (pred.test(upstreamVal)) {
+                    holdingValidValue = true;
+                    value = upstreamVal;
+                    return true;
+                } else {
+                    dead = true;
+                    return false;
+                }
+            }
+        };
+    }
+
+    @Override
     public PullStream skip(int skip) {
         if (skip < 0)
             throw new IllegalArgumentException(String.format("Cannot skip %d elements", skip));

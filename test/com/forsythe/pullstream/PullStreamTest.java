@@ -124,9 +124,24 @@ class PullStreamTest {
 
     @Test
     void minAndMax() {
-        PullStream counter = PullStream.fromList(List.of(Integer.MIN_VALUE, 0, Integer.MAX_VALUE));
-        assertEquals(Integer.MAX_VALUE, counter.max().orElse(-1));
-        PullStream counter2 = PullStream.fromList(List.of(Integer.MIN_VALUE, 0, Integer.MAX_VALUE));
-        assertEquals(Integer.MIN_VALUE, counter2.min().orElse(1));
+        PullStream extremes = PullStream.fromList(List.of(Integer.MIN_VALUE, 0, Integer.MAX_VALUE));
+        assertEquals(Integer.MAX_VALUE, extremes.max().orElse(-1));
+        PullStream extremes2 = PullStream.fromList(List.of(Integer.MIN_VALUE, 0, Integer.MAX_VALUE));
+        assertEquals(Integer.MIN_VALUE, extremes2.min().orElse(1));
+    }
+
+    @Test
+    void takeWhile() {
+        PullStream counter = PullStream.generator(1, x -> x + 1).takeWhile(x -> x < 10);
+        assertEquals(List.of(1, 2, 3, 4, 5, 6, 7, 8, 9), counter.toList());
+        assertEquals(List.of(), counter.toList()); //ensure stream exhausted
+    }
+
+    @Test
+    void count() {
+        PullStream count = PullStream.fromList(List.of(1, 2, 3, 4, 5));
+        assertEquals(5, count.count());
+        PullStream empty = PullStream.fromList(List.of());
+        assertEquals(0, count.count());
     }
 }

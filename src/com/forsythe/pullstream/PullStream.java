@@ -1,6 +1,9 @@
 package com.forsythe.pullstream;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.OptionalInt;
 import java.util.function.*;
 
 /**
@@ -61,7 +64,7 @@ public interface PullStream extends Source, Iterable<Integer> {
 
     PullStream map(IntUnaryOperator mapper);
 
-    PullStream filter(IntPredicate mapper);
+    PullStream filter(IntPredicate pred);
 
     PullStream sorted(Comparator<Integer> comparator);
 
@@ -71,7 +74,13 @@ public interface PullStream extends Source, Iterable<Integer> {
 
     PullStream limit(int limit);
 
+    PullStream takeWhile(IntPredicate pred);
+
     PullStream skip(int skip);
+
+    default int count() {
+        return fold(0, (id, el) -> id + 1);
+    }
 
     int fold(int identity, IntBinaryOperator reducer);
 
