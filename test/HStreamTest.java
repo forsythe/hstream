@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HStreamTest {
 
@@ -112,5 +113,11 @@ class HStreamTest {
         HStream stream = HStream.fromRange(1, 10);
         List<Integer> ans = stream.map(x -> x * x).filter(x -> x % 2 != 0).toList();
         assertEquals(List.of(1, 9, 25, 49, 81), ans);
+    }
+
+    @Test
+    void emptyList(){
+        HStream stream = HStream.fromVarArgs();
+        assertTrue(stream.map(x -> x * x).filter(x -> x % 2 != 0).toList().isEmpty());
     }
 }
