@@ -1,6 +1,7 @@
 package com.forsythe.pullstream;
 
 import java.util.*;
+import java.util.function.IntBinaryOperator;
 import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 
@@ -42,6 +43,7 @@ public abstract class Stage implements PullStream {
             }
         };
     }
+
 
     @Override
     public PullStream filter(IntPredicate pred) {
@@ -149,6 +151,15 @@ public abstract class Stage implements PullStream {
                 return upstream.hasNext();
             }
         };
+    }
+
+    @Override
+    public int reduce(int identity, IntBinaryOperator reducer) {
+        int val = identity;
+        while (hasNext()) {
+            val = reducer.applyAsInt(val, getNext());
+        }
+        return val;
     }
 
     @Override

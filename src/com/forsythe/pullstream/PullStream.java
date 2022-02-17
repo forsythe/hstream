@@ -3,6 +3,7 @@ package com.forsythe.pullstream;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.IntBinaryOperator;
 import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 
@@ -11,6 +12,7 @@ import java.util.function.IntUnaryOperator;
  */
 public interface PullStream extends Source, Iterable<Integer> {
     PullStream map(IntUnaryOperator mapper);
+
 
     PullStream filter(IntPredicate mapper);
 
@@ -23,6 +25,7 @@ public interface PullStream extends Source, Iterable<Integer> {
     PullStream limit(int limit);
 
     PullStream skip(int skip);
+    int reduce(int identity, IntBinaryOperator reducer);
 
     List<Integer> toList();
 

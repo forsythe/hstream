@@ -63,7 +63,7 @@ class PullStreamTest {
     @Test
     void skip() {
         //skip on infinite
-        PullStream counter = PullStream.generator(1, (a) -> a + 1);
+        PullStream counter = PullStream.generator(1, x -> x + 1);
         List<Integer> output = counter.skip(100).limit(5).skip(1).toList();
         assertEquals(List.of(102, 103, 104, 105), output);
         //skip entire list
@@ -74,11 +74,26 @@ class PullStreamTest {
 
     @Test
     void iteration() {
-        PullStream counter = PullStream.generator(1, (a) -> 2 * a);
+        PullStream counter = PullStream.generator(1, x -> 2 * x);
         assertEquals(List.of(1, 2, 4, 8), counter.limit(4).toList());
         Set<Integer> output = new HashSet<>();
         //using the same infinite counter
         counter.limit(4).forEach(output::add);
         assertEquals(Set.of(16, 32, 64, 128), output);
+
+        output.clear();
+        for (int i : counter) {
+            output.add(i);
+            if (output.size() == 4)
+                break;
+        }
+        assertEquals(Set.of(256, 512, 1024, 2048), output);
+    }
+
+    @Test
+    void reduce() {
+        PullStream counter = PullStream.generator(1, x -> x + 1);
+        int ans = counter.limit(5).reduce(0, (a, b) -> a * 10 + b);
+        assertEquals(12345, ans);
     }
 }
