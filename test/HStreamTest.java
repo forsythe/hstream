@@ -7,8 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class HStreamTest {
 
@@ -16,6 +15,12 @@ class HStreamTest {
     void map() {
         HStream stream = HStream.fromList(List.of(1, 2, 3, 4));
         assertEquals(List.of(2, 4, 6, 8), stream.map(x -> 2 * x).toList());
+    }
+
+    @Test
+    void flatMapAndIterator() {
+        HStream stream = HStream.fromList(List.of(1, 2, 3, 4));
+        assertEquals(List.of(1, 1, 2, 1, 2, 3, 1, 2, 3, 4), stream.flatMap(x -> HStream.fromRange(1, x + 1)).toList());
     }
 
     @Test
@@ -73,6 +78,9 @@ class HStreamTest {
         HStream hstream = HStream.fromList(List.of(1, 2, 3, 4));
         int toPowersOf10 = hstream.reduce(0, (a, b) -> a * 10 + b);
         assertEquals(1234, toPowersOf10);
+
+        HStream reduceWithoutIdentity = HStream.fromRange(1, 10);
+        assertEquals(123456789, reduceWithoutIdentity.reduce((a, b) -> a * 10 + b).orElse(-1));
     }
 
     @Test
@@ -87,6 +95,20 @@ class HStreamTest {
         HStream stream = HStream.fromVarArgs(1, 2, 3, 4);
         assertEquals(List.of(1, 2, 3, 4), stream.toList());
     }
+
+    @Test
+    void maxMin() {
+        HStream hStream = HStream.fromVarArgs(-10, Integer.MAX_VALUE);
+        assertEquals(Integer.MAX_VALUE, hStream.max().orElse(-1));
+        assertEquals(-10, hStream.min().orElse(1));
+        HStream empty = HStream.fromVarArgs();
+        assertFalse(empty.max().isPresent());
+        assertFalse(empty.min().isPresent());
+        HStream twoNegatives = HStream.fromVarArgs(-10, -5);
+        assertEquals(-5, twoNegatives.max().orElse(-1));
+        assertEquals(-10, twoNegatives.min().orElse(-1));
+    }
+
 
     @Test
     void fromList() {
@@ -116,7 +138,7 @@ class HStreamTest {
     }
 
     @Test
-    void emptyList(){
+    void emptyList() {
         HStream stream = HStream.fromVarArgs();
         assertTrue(stream.map(x -> x * x).filter(x -> x % 2 != 0).toList().isEmpty());
     }

@@ -4,14 +4,8 @@ import com.forsythe.Sink;
 import com.forsythe.stage.TerminalStage.TerminalConsumerStage;
 import com.forsythe.stage.TerminalStage.TerminalOperatorStage;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.function.IntConsumer;
-import java.util.function.IntPredicate;
-import java.util.function.IntUnaryOperator;
-import java.util.function.ToIntBiFunction;
+import java.util.*;
+import java.util.function.*;
 import java.util.stream.Collectors;
 
 /**
@@ -20,16 +14,31 @@ import java.util.stream.Collectors;
 public abstract class Stage implements HStream {
     protected Sink downstream;
 
+    private Stage() {
+        //no-overriding this class outside of here
+    }
+
 
     @Override
     public HStream map(IntUnaryOperator mapper) {
         Stage op = new StatelessStage(this) {
-            /**
-             * Called by my upstream. I should accept the value and pass to downstream sink
-             */
             @Override
             public void accept(int value) {
                 this.downstream.accept(mapper.applyAsInt(value));
+            }
+        };
+        this.downstream = op;
+        return op;
+    }
+
+    @Override
+    public HStream flatMap(Function<Integer, Iterable<Integer>> mapper) {
+        Stage op = new StatelessStage(this) {
+            @Override
+            public void accept(int value) {
+                for (int i : mapper.apply(value)) {
+                    this.downstream.accept(i);
+                }
             }
         };
         this.downstream = op;
@@ -63,9 +72,6 @@ public abstract class Stage implements HStream {
     public HStream filter(IntPredicate predicate) {
         Stage op = new StatelessStage(this) {
 
-            /**
-             * Called by my upstream. I should accept the value, and filter it to my downstream
-             */
             @Override
             public void accept(int i) {
                 if (predicate.test(i)) {
@@ -100,7 +106,7 @@ public abstract class Stage implements HStream {
     }
 
     @Override
-    public void forEach(IntConsumer consumer) {
+    public void forEach(Consumer<? super Integer> consumer) {
         this.downstream = new TerminalConsumerStage() {
             @Override
             public void accept(int i) {
@@ -131,7 +137,7 @@ public abstract class Stage implements HStream {
     }
 
     @Override
-    public int reduce(int identity, ToIntBiFunction<Integer, Integer> toIntBiFunction) {
+    public int reduce(int identity, ToIntBiFunction<Integer, Integer> combiner) {
         TerminalOperatorStage<Integer> tes = new TerminalOperatorStage<>() {
             int value = identity;
 
@@ -142,7 +148,7 @@ public abstract class Stage implements HStream {
 
             @Override
             public void accept(int i) {
-                value = toIntBiFunction.applyAsInt(value, i);
+                value = combiner.applyAsInt(value, i);
             }
         };
         this.downstream = tes;
@@ -168,6 +174,38 @@ public abstract class Stage implements HStream {
         this.downstream = tes;
         evaluate();
         return tes.getResult();
+    }
+
+    @Override
+    public Optional<Integer> reduce(ToIntBiFunction<Integer, Integer> combiner) {
+        TerminalOperatorStage<Optional<Integer>> tes = new TerminalOperatorStage<>() {
+            boolean sawValue = false;
+            int baseVal = 0;
+
+            @Override
+            Optional<Integer> getResult() {
+                return sawValue ? Optional.of(baseVal) : Optional.empty();
+            }
+
+            @Override
+            public void accept(int i) {
+                if (!sawValue) {
+                    baseVal = i;
+                    sawValue = true;
+                } else {
+                    baseVal = combiner.applyAsInt(baseVal, i);
+                }
+            }
+        };
+        this.downstream = tes;
+        evaluate();
+        return tes.getResult();
+    }
+
+    @Override
+    public Iterator<Integer> iterator() {
+        List<Integer> output = toList();
+        return output.iterator();
     }
 
     /**

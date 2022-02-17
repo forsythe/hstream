@@ -4,6 +4,11 @@ package com.forsythe;
 import java.util.Comparator;
 
 public interface Sink {
+    /**
+     * Override this function to determine how/if to consume a value in this stage
+     *
+     * @param i The value for this stage to consume
+     */
     void accept(int i);
 
     /**

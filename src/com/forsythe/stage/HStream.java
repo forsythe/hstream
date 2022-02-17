@@ -2,23 +2,20 @@ package com.forsythe.stage;
 
 import com.forsythe.Sink;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.function.IntConsumer;
-import java.util.function.IntPredicate;
-import java.util.function.IntUnaryOperator;
-import java.util.function.ToIntBiFunction;
+import java.util.*;
+import java.util.function.*;
 
 /**
  * The interface the user expects when given a stream
  */
-public interface HStream extends Sink {
+public interface HStream extends Sink, Iterable<Integer> {
+
+
     /**
      * Static factory methods
      **/
     static HStream fromList(List<Integer> list) {
         return new Stage.HeadStage() {
-
             @Override
             protected void loadData() {
                 for (int i : list) {
@@ -55,6 +52,8 @@ public interface HStream extends Sink {
      **/
     HStream map(IntUnaryOperator mapper);
 
+    HStream flatMap(Function<Integer, Iterable<Integer>> mapper);
+
     HStream peek();
 
     HStream filter(IntPredicate predicate);
@@ -68,9 +67,18 @@ public interface HStream extends Sink {
     /**
      * Terminal operations
      **/
-    void forEach(IntConsumer consumer);
 
-    int reduce(int identity, ToIntBiFunction<Integer, Integer> toIntBiFunction);
+    int reduce(int identity, ToIntBiFunction<Integer, Integer> combiner);
+
+    Optional<Integer> reduce(ToIntBiFunction<Integer, Integer> combiner);
+
+    default Optional<Integer> max() {
+        return reduce(Math::max);
+    }
+
+    default Optional<Integer> min() {
+        return reduce(Math::min);
+    }
 
     int sum();
 
