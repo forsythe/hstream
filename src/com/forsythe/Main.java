@@ -4,16 +4,20 @@ import com.forsythe.pullstream.PullStream;
 import com.forsythe.pushstream.PushStream;
 
 import java.util.List;
-import java.util.stream.Stream;
 
 public class Main {
     public static void main(String[] args) {
         PushStream pushStream = PushStream.fromRange(0, 10);
-        List<Integer> pushOutput = pushStream.flatMap(x -> PushStream.of(-x, x)).limit(5).toList();
+        List<Integer> pushOutput = pushStream.flatMap(x -> PushStream.of(-x * x, x * x)).limit(10).toList();
         System.out.println(pushOutput);
 
-        PullStream pullStream = PullStream.fromList(List.of(1, 2, 3));
-        List<Integer> pullOutput = pullStream.map(x -> x * x).toList();
-        System.out.println(pullOutput);
+        //Lazily evaluated
+        int[] prev = new int[]{0};
+        PullStream.generator(1, (cur) -> {
+            int temp = prev[0];
+            prev[0] = cur;
+            return cur + temp;
+        }).takeWhile(x -> x < 100)
+                .forEach(System.out::println);
     }
 }
