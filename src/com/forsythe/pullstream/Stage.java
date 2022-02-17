@@ -88,6 +88,9 @@ public abstract class Stage implements PullStream {
 
     @Override
     public PullStream limit(int limit) {
+        if (limit < 0)
+            throw new IllegalArgumentException(String.format("Cannot limit to %d elements", limit));
+
         return new Stage(this) {
             int remaining = limit;
 
@@ -101,6 +104,35 @@ public abstract class Stage implements PullStream {
             @Override
             public boolean hasNext() {
                 return remaining > 0 && upstream.hasNext();
+            }
+        };
+    }
+
+    @Override
+    public PullStream skip(int skip) {
+        if (skip < 0)
+            throw new IllegalArgumentException(String.format("Cannot skip %d elements", skip));
+
+        return new Stage(this) {
+            int toSkip = skip;
+
+            {
+                //anonymous initializer
+                while (toSkip > 0 && upstream.hasNext()) {
+                    toSkip--;
+                    upstream.getNext();
+                }
+            }
+
+            @Override
+            public int getNext() {
+                return upstream.getNext();
+            }
+
+
+            @Override
+            public boolean hasNext() {
+                return upstream.hasNext();
             }
         };
     }

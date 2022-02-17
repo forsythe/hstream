@@ -19,6 +19,8 @@ public interface PullStream extends Source {
 
     PullStream limit(int limit);
 
+    PullStream skip(int skip);
+
     List<Integer> toList();
 
     static PullStream fromList(List<Integer> input) {

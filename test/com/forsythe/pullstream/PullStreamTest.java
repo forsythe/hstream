@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PullStreamTest {
     @Test
@@ -47,9 +48,25 @@ class PullStreamTest {
     }
 
     @Test
-    void generator() {
+    void generatorAndLimit() {
         PullStream counter = PullStream.generator(1, (a) -> a + 1);
         List<Integer> output = counter.map(x -> x * x).limit(5).toList();
         assertEquals(List.of(1, 4, 9, 16, 25), output);
+
+        PullStream counter2 = PullStream.generator(1, (a) -> a + 1);
+        List<Integer> output2 = counter.map(x -> x * x).limit(0).toList();
+        assertTrue(output2.isEmpty());
+    }
+
+    @Test
+    void skip() {
+        //skip on infinite
+        PullStream counter = PullStream.generator(1, (a) -> a + 1);
+        List<Integer> output = counter.skip(100).limit(5).toList();
+        assertEquals(List.of(101, 102, 103, 104, 105), output);
+        //skip entire list
+        assertEquals(List.of(), PullStream.fromList(List.of(1, 2, 3)).skip(3).toList());
+        //skip nothing
+        assertEquals(List.of(1, 2, 3), PullStream.fromList(List.of(1, 2, 3)).skip(0).toList());
     }
 }
