@@ -37,6 +37,13 @@ class HStreamTest {
     }
 
     @Test
+    void limit() {
+        HStream stream = HStream.fromRange(1, 10);
+        List<Integer> output = stream.flatMap(x -> HStream.fromVarArgs(-x, x)).limit(5).peek().toList();
+        assertEquals(List.of(-1, 1, -2, 2, -3), output);
+    }
+
+    @Test
     void peek() {
         ByteArrayOutputStream outContent = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outContent));
@@ -62,7 +69,7 @@ class HStreamTest {
                 "-490 -250 -90 -10 40 160 360 640\r\n";
         assertEquals(expected, outContent.toString());
         System.setOut(System.out);
-
+        assertEquals(List.of(-490, -250, -90, -10, 40, 160, 360, 640), output);
     }
 
     @Test

@@ -60,6 +60,8 @@ public interface HStream extends Sink, Iterable<Integer> {
 
     HStream sorted(Comparator<Integer> comparator);
 
+    HStream limit(int limit);
+
     default HStream sorted() {
         return sorted(Integer::compare);
     }

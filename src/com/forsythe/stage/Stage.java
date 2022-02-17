@@ -106,6 +106,23 @@ public abstract class Stage implements HStream {
     }
 
     @Override
+    public HStream limit(int limit) {
+        Stage op = new StatelessStage(this) {
+            int remaining = limit;
+
+            @Override
+            public void accept(int i) {
+                if (remaining > 0) {
+                    this.downstream.accept(i);
+                    remaining--;
+                }
+            }
+        };
+        this.downstream = op;
+        return op;
+    }
+
+    @Override
     public void forEach(Consumer<? super Integer> consumer) {
         this.downstream = new TerminalConsumerStage() {
             @Override
