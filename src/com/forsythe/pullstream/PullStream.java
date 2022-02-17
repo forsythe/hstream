@@ -6,7 +6,10 @@ import java.util.List;
 import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 
-public interface PullStream extends Source {
+/**
+ * Interface representing a single use lazy stream of integers
+ */
+public interface PullStream extends Source, Iterable<Integer> {
     PullStream map(IntUnaryOperator mapper);
 
     PullStream filter(IntPredicate mapper);
@@ -66,7 +69,9 @@ public interface PullStream extends Source {
 
             @Override
             public int getNext() {
-                return val++;
+                int retVal = val;
+                val = generator.applyAsInt(val);
+                return retVal;
             }
         });
     }

@@ -2,7 +2,9 @@ package com.forsythe.pullstream;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -54,7 +56,7 @@ class PullStreamTest {
         assertEquals(List.of(1, 4, 9, 16, 25), output);
 
         PullStream counter2 = PullStream.generator(1, (a) -> a + 1);
-        List<Integer> output2 = counter.map(x -> x * x).limit(0).toList();
+        List<Integer> output2 = counter2.map(x -> x * x).limit(0).toList();
         assertTrue(output2.isEmpty());
     }
 
@@ -62,11 +64,21 @@ class PullStreamTest {
     void skip() {
         //skip on infinite
         PullStream counter = PullStream.generator(1, (a) -> a + 1);
-        List<Integer> output = counter.skip(100).limit(5).toList();
-        assertEquals(List.of(101, 102, 103, 104, 105), output);
+        List<Integer> output = counter.skip(100).limit(5).skip(1).toList();
+        assertEquals(List.of(102, 103, 104, 105), output);
         //skip entire list
         assertEquals(List.of(), PullStream.fromList(List.of(1, 2, 3)).skip(3).toList());
         //skip nothing
         assertEquals(List.of(1, 2, 3), PullStream.fromList(List.of(1, 2, 3)).skip(0).toList());
+    }
+
+    @Test
+    void iteration() {
+        PullStream counter = PullStream.generator(1, (a) -> 2 * a);
+        assertEquals(List.of(1, 2, 4, 8), counter.limit(4).toList());
+        Set<Integer> output = new HashSet<>();
+        //using the same infinite counter
+        counter.limit(4).forEach(output::add);
+        assertEquals(Set.of(16, 32, 64, 128), output);
     }
 }

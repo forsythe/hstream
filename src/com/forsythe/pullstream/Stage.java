@@ -1,9 +1,6 @@
 package com.forsythe.pullstream;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.PriorityQueue;
+import java.util.*;
 import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 
@@ -15,8 +12,25 @@ public abstract class Stage implements PullStream {
     }
 
     @Override
+    public Iterator<Integer> iterator() {
+        return new Iterator<Integer>() {
+            @Override
+            public boolean hasNext() {
+                return Stage.this.hasNext();
+            }
+
+            @Override
+            public Integer next() {
+                return Stage.this.getNext();
+            }
+        };
+    }
+
+    @Override
     public PullStream map(IntUnaryOperator mapper) {
         return new Stage(this) {
+
+
             @Override
             public int getNext() {
                 return mapper.applyAsInt(upstream.getNext());
