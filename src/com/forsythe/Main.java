@@ -1,10 +1,10 @@
 package com.forsythe;
 
-import com.forsythe.stage.HStream;
+import com.forsythe.pushstream.PushStream;
 
 public class Main {
     public static void main(String[] args) {
-        HStream stream = HStream.fromRange(0, 10);
-        stream.flatMap(x -> HStream.of(-x, x)).limit(5).peek().toList();
+        PushStream stream = PushStream.fromRange(0, 10);
+        stream.flatMap(x -> PushStream.of(-x, x)).limit(5).peek().toList();
     }
 }

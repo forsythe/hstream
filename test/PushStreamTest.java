@@ -1,4 +1,4 @@
-import com.forsythe.stage.HStream;
+import com.forsythe.pushstream.PushStream;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -9,46 +9,46 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class HStreamTest {
+class PushStreamTest {
 
     @Test
     void map() {
-        HStream stream = HStream.fromList(List.of(1, 2, 3, 4));
+        PushStream stream = PushStream.fromList(List.of(1, 2, 3, 4));
         assertEquals(List.of(2, 4, 6, 8), stream.map(x -> 2 * x).toList());
     }
 
     @Test
     void flatMapAndIterator() {
-        HStream stream = HStream.fromList(List.of(1, 2, 3, 4));
-        assertEquals(List.of(1, 1, 2, 1, 2, 3, 1, 2, 3, 4), stream.flatMap(x -> HStream.fromRange(1, x + 1)).toList());
+        PushStream stream = PushStream.fromList(List.of(1, 2, 3, 4));
+        assertEquals(List.of(1, 1, 2, 1, 2, 3, 1, 2, 3, 4), stream.flatMap(x -> PushStream.fromRange(1, x + 1)).toList());
     }
 
     @Test
     void filter() {
-        HStream stream = HStream.fromRange(0, 6);
+        PushStream stream = PushStream.fromRange(0, 6);
         assertEquals(List.of(0, 2, 4), stream.filter(x -> x % 2 == 0).toList());
         assertEquals(List.of(), stream.filter(x -> x >= 6).toList());
     }
 
     @Test
     void sorted() {
-        HStream stream = HStream.fromRange(1, 10);
+        PushStream stream = PushStream.fromRange(1, 10);
         List<Integer> output = stream.map(x -> x * x).map(x -> x % 2 == 0 ? x : -x).sorted().map(x -> x * 10).toList();
         assertEquals(List.of(-810, -490, -250, -90, -10, 40, 160, 360, 640), output);
     }
 
     @Test
     void limitAndSkip() {
-        HStream firstHalf = HStream.fromRange(1, 10).limit(5);
-        HStream secondHalf = HStream.fromRange(1, 10).skip(5); //TODO: fix, since limit/skip are use-once, make streams use-once as well
-        assertEquals(HStream.fromRange(1, 10).toList(), HStream.concat(firstHalf, secondHalf).toList());
+        PushStream firstHalf = PushStream.fromRange(1, 10).limit(5);
+        PushStream secondHalf = PushStream.fromRange(1, 10).skip(5); //TODO: fix, since limit/skip are use-once, make streams use-once as well
+        assertEquals(PushStream.fromRange(1, 10).toList(), PushStream.concat(firstHalf, secondHalf).toList());
     }
 
     @Test
     void peek() {
         ByteArrayOutputStream outContent = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outContent));
-        HStream stream = HStream.fromRange(1, 10);
+        PushStream stream = PushStream.fromRange(1, 10);
         List<Integer> output = stream
                 .peek()
                 .map(x -> x * x)
@@ -75,7 +75,7 @@ class HStreamTest {
 
     @Test
     void forEach() {
-        HStream stream = HStream.fromRange(-3, 3);
+        PushStream stream = PushStream.fromRange(-3, 3);
         Set<Integer> vals = new HashSet<>();
         stream.forEach(vals::add);
         assertEquals(Set.of(-3, -2, -1, 0, 1, 2), vals);
@@ -83,43 +83,43 @@ class HStreamTest {
 
     @Test
     void reduce() {
-        HStream hstream = HStream.fromList(List.of(1, 2, 3, 4));
+        PushStream hstream = PushStream.fromList(List.of(1, 2, 3, 4));
         int toPowersOf10 = hstream.reduce(0, (a, b) -> a * 10 + b);
         assertEquals(1234, toPowersOf10);
 
-        HStream reduceWithoutIdentity = HStream.fromRange(1, 10);
+        PushStream reduceWithoutIdentity = PushStream.fromRange(1, 10);
         assertEquals(123456789, reduceWithoutIdentity.reduce((a, b) -> a * 10 + b).orElse(-1));
     }
 
     @Test
     void sum() {
-        HStream stream = HStream.fromRange(1, 101);
+        PushStream stream = PushStream.fromRange(1, 101);
         int sum = stream.sum();
         assertEquals((100 * 101) / 2, sum);
     }
 
     @Test
     void count() {
-        HStream squares = HStream.fromRange(0, 101);
+        PushStream squares = PushStream.fromRange(0, 101);
         int powerOf2 = squares.filter(x -> Integer.bitCount(x) <= 1).peek().count();
         assertEquals(8, powerOf2);
     }
 
     @Test
     void toList() {
-        HStream stream = HStream.of(1, 2, 3, 4);
+        PushStream stream = PushStream.of(1, 2, 3, 4);
         assertEquals(List.of(1, 2, 3, 4), stream.toList());
     }
 
     @Test
     void maxMin() {
-        HStream hStream = HStream.of(-10, Integer.MAX_VALUE);
-        assertEquals(Integer.MAX_VALUE, hStream.max().orElse(-1));
-        assertEquals(-10, hStream.min().orElse(1));
-        HStream empty = HStream.of();
+        PushStream pushStream = PushStream.of(-10, Integer.MAX_VALUE);
+        assertEquals(Integer.MAX_VALUE, pushStream.max().orElse(-1));
+        assertEquals(-10, pushStream.min().orElse(1));
+        PushStream empty = PushStream.of();
         assertFalse(empty.max().isPresent());
         assertFalse(empty.min().isPresent());
-        HStream twoNegatives = HStream.of(-10, -5);
+        PushStream twoNegatives = PushStream.of(-10, -5);
         assertEquals(-5, twoNegatives.max().orElse(-1));
         assertEquals(-10, twoNegatives.min().orElse(-1));
     }
@@ -128,60 +128,60 @@ class HStreamTest {
     @Test
     void fromList() {
         List<Integer> original = List.of(1, 2, 3, 4);
-        HStream stream = HStream.fromList(original);
+        PushStream stream = PushStream.fromList(original);
         assertEquals(original, stream.toList());
     }
 
     @Test
     void of() {
-        HStream stream = HStream.of(-2, 0, 2, Integer.MAX_VALUE);
+        PushStream stream = PushStream.of(-2, 0, 2, Integer.MAX_VALUE);
         assertEquals(List.of(-2, 0, 2, Integer.MAX_VALUE), stream.toList());
     }
 
     @Test
     void concat() {
-        HStream evens = HStream.fromRange(0, 10).filter(x -> x % 2 == 0);
-        HStream odds = HStream.fromRange(0, 10).filter(x -> x % 2 != 0);
-        HStream combined = HStream.concat(evens, odds);
+        PushStream evens = PushStream.fromRange(0, 10).filter(x -> x % 2 == 0);
+        PushStream odds = PushStream.fromRange(0, 10).filter(x -> x % 2 != 0);
+        PushStream combined = PushStream.concat(evens, odds);
         assertEquals(List.of(0, 2, 4, 6, 8, 1, 3, 5, 7, 9), combined.toList());
-        assertEquals(HStream.fromRange(0, 10).toList(), combined.sorted().toList());
+        assertEquals(PushStream.fromRange(0, 10).toList(), combined.sorted().toList());
     }
 
     @Test
     void fromRange() {
-        HStream stream = HStream.fromRange(1, 10);
+        PushStream stream = PushStream.fromRange(1, 10);
         assertEquals(3 + 6 + 9, stream.filter(x -> x % 3 == 0).sum());
     }
 
     @Test
     void fromRangeMapFilterToList() {
-        HStream stream = HStream.fromRange(1, 10);
+        PushStream stream = PushStream.fromRange(1, 10);
         List<Integer> ans = stream.map(x -> x * x).filter(x -> x % 2 != 0).toList();
         assertEquals(List.of(1, 9, 25, 49, 81), ans);
     }
 
     @Test
     void emptyList() {
-        HStream stream = HStream.of();
+        PushStream stream = PushStream.of();
         assertTrue(stream.map(x -> x * x).filter(x -> x % 2 != 0).toList().isEmpty());
     }
 
     @Test
     void quicksort() {
-        HStream stream = HStream.of(3, 2, 1, 5, 4, 9, 7, 6, 8, 0);
-        HStream sorted = qs(stream);
+        PushStream stream = PushStream.of(3, 2, 1, 5, 4, 9, 7, 6, 8, 0);
+        PushStream sorted = qs(stream);
         assertEquals(stream.sorted().toList(), sorted.toList());
     }
 
-    private HStream qs(HStream stream) {
+    private PushStream qs(PushStream stream) {
         if (stream.count() <= 1)
             return stream;
 
         List<Integer> elements = stream.toList();
         int pivot = elements.get(0);
         List<Integer> rest = elements.subList(1, elements.size());
-        HStream less = qs(HStream.fromList(rest).filter(x -> x <= pivot));
-        HStream greater = qs(HStream.fromList(rest).filter(x -> x > pivot));
-        return HStream.concat(less, HStream.of(pivot), greater);
+        PushStream less = qs(PushStream.fromList(rest).filter(x -> x <= pivot));
+        PushStream greater = qs(PushStream.fromList(rest).filter(x -> x > pivot));
+        return PushStream.concat(less, PushStream.of(pivot), greater);
     }
 }

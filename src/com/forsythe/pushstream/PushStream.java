@@ -1,6 +1,4 @@
-package com.forsythe.stage;
-
-import com.forsythe.Sink;
+package com.forsythe.pushstream;
 
 import java.util.Comparator;
 import java.util.List;
@@ -13,13 +11,13 @@ import java.util.function.ToIntBiFunction;
 /**
  * The interface the user expects when given a stream
  */
-public interface HStream extends Sink, Iterable<Integer> {
+public interface PushStream extends Sink, Iterable<Integer> {
 
 
     /**
      * Static factory methods
      **/
-    static HStream fromList(List<Integer> list) {
+    static PushStream fromList(List<Integer> list) {
         return new Stage.HeadStage() {
             @Override
             protected void loadData() {
@@ -30,7 +28,7 @@ public interface HStream extends Sink, Iterable<Integer> {
         };
     }
 
-    static HStream of(int... nums) {
+    static PushStream of(int... nums) {
         return new Stage.HeadStage() {
             @Override
             protected void loadData() {
@@ -41,11 +39,11 @@ public interface HStream extends Sink, Iterable<Integer> {
         };
     }
 
-    static HStream concat(HStream... streams) {
+    static PushStream concat(PushStream... streams) {
         return new Stage.HeadStage() {
             @Override
             protected void loadData() {
-                for (HStream stream : streams) {
+                for (PushStream stream : streams) {
                     for (int i : stream) {
                         accept(i);
                     }
@@ -54,7 +52,7 @@ public interface HStream extends Sink, Iterable<Integer> {
         };
     }
 
-    static HStream fromRange(int fromIncl, int toExcl) {
+    static PushStream fromRange(int fromIncl, int toExcl) {
         return new Stage.HeadStage() {
             @Override
             protected void loadData() {
@@ -68,21 +66,21 @@ public interface HStream extends Sink, Iterable<Integer> {
     /**
      * Nonterminal operations
      **/
-    HStream map(IntUnaryOperator mapper);
+    PushStream map(IntUnaryOperator mapper);
 
-    HStream flatMap(Function<Integer, Iterable<Integer>> mapper);
+    PushStream flatMap(Function<Integer, Iterable<Integer>> mapper);
 
-    HStream peek();
+    PushStream peek();
 
-    HStream filter(IntPredicate predicate);
+    PushStream filter(IntPredicate predicate);
 
-    HStream sorted(Comparator<Integer> comparator);
+    PushStream sorted(Comparator<Integer> comparator);
 
-    HStream limit(int limit);
+    PushStream limit(int limit);
 
-    HStream skip(int skip);
+    PushStream skip(int skip);
 
-    default HStream sorted() {
+    default PushStream sorted() {
         return sorted(Integer::compare);
     }
 

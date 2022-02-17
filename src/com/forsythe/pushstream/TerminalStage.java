@@ -1,6 +1,4 @@
-package com.forsythe.stage;
-
-import com.forsythe.Sink;
+package com.forsythe.pushstream;
 
 public abstract class TerminalStage implements Sink {
 

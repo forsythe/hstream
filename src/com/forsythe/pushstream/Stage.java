@@ -1,8 +1,7 @@
-package com.forsythe.stage;
+package com.forsythe.pushstream;
 
-import com.forsythe.Sink;
-import com.forsythe.stage.TerminalStage.TerminalConsumerStage;
-import com.forsythe.stage.TerminalStage.TerminalOperatorStage;
+import com.forsythe.pushstream.TerminalStage.TerminalConsumerStage;
+import com.forsythe.pushstream.TerminalStage.TerminalOperatorStage;
 
 import java.util.*;
 import java.util.function.*;
@@ -11,7 +10,7 @@ import java.util.stream.Collectors;
 /**
  * Represents a stage of the stream that takes some input and potentially produces some output
  */
-public abstract class Stage implements HStream {
+public abstract class Stage implements PushStream {
     protected Sink downstream;
 
     private Stage() {
@@ -20,7 +19,7 @@ public abstract class Stage implements HStream {
 
 
     @Override
-    public HStream map(IntUnaryOperator mapper) {
+    public PushStream map(IntUnaryOperator mapper) {
         Stage op = new StatelessStage(this) {
             @Override
             public void accept(int value) {
@@ -32,7 +31,7 @@ public abstract class Stage implements HStream {
     }
 
     @Override
-    public HStream flatMap(Function<Integer, Iterable<Integer>> mapper) {
+    public PushStream flatMap(Function<Integer, Iterable<Integer>> mapper) {
         Stage op = new StatelessStage(this) {
             @Override
             public void accept(int value) {
@@ -46,7 +45,7 @@ public abstract class Stage implements HStream {
     }
 
     @Override
-    public HStream peek() {
+    public PushStream peek() {
         Stage op = new StatefulStage(this) {
             List<Integer> values = new ArrayList<>();
 
@@ -69,7 +68,7 @@ public abstract class Stage implements HStream {
     }
 
     @Override
-    public HStream filter(IntPredicate predicate) {
+    public PushStream filter(IntPredicate predicate) {
         Stage op = new StatelessStage(this) {
 
             @Override
@@ -84,7 +83,7 @@ public abstract class Stage implements HStream {
     }
 
     @Override
-    public HStream sorted(Comparator<Integer> comparator) {
+    public PushStream sorted(Comparator<Integer> comparator) {
         Stage op = new StatefulStage(this) {
             PriorityQueue<Integer> heap = new PriorityQueue<>(comparator);
 
@@ -106,7 +105,7 @@ public abstract class Stage implements HStream {
     }
 
     @Override
-    public HStream limit(int limit) {
+    public PushStream limit(int limit) {
         Stage op = new StatelessStage(this) {
             int remaining = limit;
 
@@ -123,7 +122,7 @@ public abstract class Stage implements HStream {
     }
 
     @Override
-    public HStream skip(int skip) {
+    public PushStream skip(int skip) {
         Stage op = new StatelessStage(this) {
             int toSkip = skip;
 
