@@ -1,6 +1,5 @@
 package com.forsythe.pushstream;
 
-import com.forsythe.pushstream.PushStream;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;

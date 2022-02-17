@@ -1,7 +1,5 @@
 package com.forsythe.pullstream;
 
-import javax.crypto.spec.PSource;
-
 public class HeadStage extends Stage {
 
     public HeadStage(Source upstream) {

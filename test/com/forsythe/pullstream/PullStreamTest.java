@@ -2,9 +2,7 @@ package com.forsythe.pullstream;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -95,5 +93,28 @@ class PullStreamTest {
         PullStream counter = PullStream.generator(1, x -> x + 1);
         int ans = counter.limit(5).reduce(0, (a, b) -> a * 10 + b);
         assertEquals(12345, ans);
+    }
+
+    @Test
+    void reduceObj() {
+        PullStream counter = PullStream.generator(1, x -> x + 1);
+        Map<Integer, Integer> count = new HashMap<>();
+        counter.limit(5).reduce(count, (a, b) -> {
+            a.merge(b, 1, Integer::sum);
+            return a;
+        });
+        assertEquals(Map.of(1, 1,
+                2, 1,
+                3, 1,
+                4, 1,
+                5, 1), count);
+    }
+
+    @Test
+    void flatMap() {
+        PullStream counter = PullStream.generator(1, x -> x + 1)
+                .limit(3)
+                .flatMap(x -> PullStream.generator(x, a -> a).limit(x));
+        assertEquals(List.of(1, 2, 2, 3, 3, 3), counter.toList());
     }
 }

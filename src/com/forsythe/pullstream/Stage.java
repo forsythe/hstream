@@ -2,6 +2,7 @@ package com.forsythe.pullstream;
 
 import java.util.*;
 import java.util.function.IntBinaryOperator;
+import java.util.function.IntFunction;
 import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 
@@ -23,6 +24,37 @@ public abstract class Stage implements PullStream {
             @Override
             public Integer next() {
                 return Stage.this.getNext();
+            }
+        };
+    }
+
+    @Override
+    public PullStream flatMap(IntFunction<Iterable<Integer>> mapper) {
+        //an iterator of iterators :)
+        /*
+        Either my current generatedStream has content, or I must try to refresh it with another generatedStream
+        based on upstream's output. If both exhausted, no more elements left
+         */
+        return new Stage(this) {
+            Iterator<Integer> generatedStreamIterator;
+
+            @Override
+            public int getNext() {
+                return generatedStreamIterator.next();
+            }
+
+            @Override
+            public boolean hasNext() {
+                if (generatedStreamIterator != null && generatedStreamIterator.hasNext()) {
+                    return true;
+                }
+                //current generated stream ran out, try to refresh our iterator
+                if (!upstream.hasNext()) {
+                    //unable to refresh
+                    return false;
+                }
+                generatedStreamIterator = mapper.apply(upstream.getNext()).iterator();
+                return generatedStreamIterator.hasNext();
             }
         };
     }
@@ -158,6 +190,15 @@ public abstract class Stage implements PullStream {
         int val = identity;
         while (hasNext()) {
             val = reducer.applyAsInt(val, getNext());
+        }
+        return val;
+    }
+
+    @Override
+    public <T> T reduce(T identity, ObjIntBiFunction<T> binaryOperator) {
+        T val = identity;
+        while (hasNext()) {
+            val = binaryOperator.apply(val, getNext());
         }
         return val;
     }
