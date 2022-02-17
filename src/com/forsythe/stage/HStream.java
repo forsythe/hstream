@@ -41,15 +41,14 @@ public interface HStream extends Sink, Iterable<Integer> {
         };
     }
 
-    static HStream concat(HStream first, HStream second) {
+    static HStream concat(HStream... streams) {
         return new Stage.HeadStage() {
             @Override
             protected void loadData() {
-                for (int i : first) {
-                    downstream.accept(i);
-                }
-                for (int j : second) {
-                    downstream.accept(j);
+                for (HStream stream : streams) {
+                    for (int i : stream) {
+                        accept(i);
+                    }
                 }
             }
         };
@@ -81,6 +80,8 @@ public interface HStream extends Sink, Iterable<Integer> {
 
     HStream limit(int limit);
 
+    HStream skip(int skip);
+
     default HStream sorted() {
         return sorted(Integer::compare);
     }
@@ -100,6 +101,8 @@ public interface HStream extends Sink, Iterable<Integer> {
     default Optional<Integer> min() {
         return reduce(Math::min);
     }
+
+    int count();
 
     int sum();
 

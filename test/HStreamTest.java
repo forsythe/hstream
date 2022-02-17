@@ -27,6 +27,7 @@ class HStreamTest {
     void filter() {
         HStream stream = HStream.fromRange(0, 6);
         assertEquals(List.of(0, 2, 4), stream.filter(x -> x % 2 == 0).toList());
+        assertEquals(List.of(), stream.filter(x -> x >= 6).toList());
     }
 
     @Test
@@ -37,10 +38,10 @@ class HStreamTest {
     }
 
     @Test
-    void limit() {
-        HStream stream = HStream.fromRange(1, 10);
-        List<Integer> output = stream.flatMap(x -> HStream.of(-x, x)).limit(5).peek().toList();
-        assertEquals(List.of(-1, 1, -2, 2, -3), output);
+    void limitAndSkip() {
+        HStream firstHalf = HStream.fromRange(1, 10).limit(5);
+        HStream secondHalf = HStream.fromRange(1, 10).skip(5); //TODO: fix, since limit/skip are use-once, make streams use-once as well
+        assertEquals(HStream.fromRange(1, 10).toList(), HStream.concat(firstHalf, secondHalf).toList());
     }
 
     @Test
@@ -95,6 +96,13 @@ class HStreamTest {
         HStream stream = HStream.fromRange(1, 101);
         int sum = stream.sum();
         assertEquals((100 * 101) / 2, sum);
+    }
+
+    @Test
+    void count() {
+        HStream squares = HStream.fromRange(0, 101);
+        int powerOf2 = squares.filter(x -> Integer.bitCount(x) <= 1).peek().count();
+        assertEquals(8, powerOf2);
     }
 
     @Test
@@ -156,5 +164,24 @@ class HStreamTest {
     void emptyList() {
         HStream stream = HStream.of();
         assertTrue(stream.map(x -> x * x).filter(x -> x % 2 != 0).toList().isEmpty());
+    }
+
+    @Test
+    void quicksort() {
+        HStream stream = HStream.of(3, 2, 1, 5, 4, 9, 7, 6, 8, 0);
+        HStream sorted = qs(stream);
+        assertEquals(stream.sorted().toList(), sorted.toList());
+    }
+
+    private HStream qs(HStream stream) {
+        if (stream.count() <= 1)
+            return stream;
+
+        List<Integer> elements = stream.toList();
+        int pivot = elements.get(0);
+        List<Integer> rest = elements.subList(1, elements.size());
+        HStream less = qs(HStream.fromList(rest).filter(x -> x <= pivot));
+        HStream greater = qs(HStream.fromList(rest).filter(x -> x > pivot));
+        return HStream.concat(less, HStream.of(pivot), greater);
     }
 }

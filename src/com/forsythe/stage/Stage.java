@@ -123,6 +123,24 @@ public abstract class Stage implements HStream {
     }
 
     @Override
+    public HStream skip(int skip) {
+        Stage op = new StatelessStage(this) {
+            int toSkip = skip;
+
+            @Override
+            public void accept(int i) {
+                if (toSkip > 0) {
+                    toSkip--;
+                } else {
+                    this.downstream.accept(i);
+                }
+            }
+        };
+        this.downstream = op;
+        return op;
+    }
+
+    @Override
     public void forEach(Consumer<? super Integer> consumer) {
         this.downstream = new TerminalConsumerStage() {
             @Override
@@ -146,6 +164,26 @@ public abstract class Stage implements HStream {
             @Override
             public void accept(int i) {
                 total += i;
+            }
+        };
+        this.downstream = tes;
+        evaluate();
+        return tes.getResult();
+    }
+
+    @Override
+    public int count() {
+        TerminalOperatorStage<Integer> tes = new TerminalOperatorStage<>() {
+            int total = 0;
+
+            @Override
+            public Integer getResult() {
+                return total;
+            }
+
+            @Override
+            public void accept(int i) {
+                total++;
             }
         };
         this.downstream = tes;
