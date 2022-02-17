@@ -2,11 +2,12 @@ package com.forsythe.pullstream;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 
 public interface PullStream extends Source {
     PullStream map(IntUnaryOperator mapper);
-
+    PullStream filter(IntPredicate mapper);
     List<Integer> toList();
 
     static PullStream fromList(List<Integer> input) {
