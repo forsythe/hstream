@@ -4,8 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class PullStreamTest {
     @Test
@@ -113,5 +112,21 @@ class PullStreamTest {
                 .limit(3)
                 .flatMap(x -> PullStream.generator(x, a -> a).limit(x));
         assertEquals(List.of(1, 2, 2, 3, 3, 3), counter.toList());
+    }
+
+    @Test
+    void reduce() {
+        PullStream empty = PullStream.fromList(List.of());
+        assertFalse(empty.reduce(Math::max).isPresent());
+        OptionalInt powersOf2 = PullStream.generator(1, x -> 2 * x).limit(5).reduce((a, b) -> a | b);
+        assertEquals(0b11111, powersOf2.orElse(0));
+    }
+
+    @Test
+    void minAndMax() {
+        PullStream counter = PullStream.fromList(List.of(Integer.MIN_VALUE, 0, Integer.MAX_VALUE));
+        assertEquals(Integer.MAX_VALUE, counter.max().orElse(-1));
+        PullStream counter2 = PullStream.fromList(List.of(Integer.MIN_VALUE, 0, Integer.MAX_VALUE));
+        assertEquals(Integer.MIN_VALUE, counter2.min().orElse(1));
     }
 }

@@ -1,8 +1,6 @@
 package com.forsythe.pullstream;
 
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.function.*;
 
 /**
@@ -78,6 +76,24 @@ public interface PullStream extends Source, Iterable<Integer> {
     int fold(int identity, IntBinaryOperator reducer);
 
     <T> void fold(T identity, ObjIntConsumer<T> objIntConsumer);
+
+    OptionalInt reduce(IntBinaryOperator binaryOperator);
+
+    default OptionalInt min() {
+        return min(Integer::compare);
+    }
+
+    default OptionalInt max() {
+        return max(Integer::compare);
+    }
+
+    default OptionalInt min(Comparator<Integer> comparator) {
+        return reduce((a, b) -> comparator.compare(a, b) <= 0 ? a : b);
+    }
+
+    default OptionalInt max(Comparator<Integer> comparator) {
+        return reduce((a, b) -> comparator.compare(a, b) <= 0 ? b : a);
+    }
 
     List<Integer> toList();
 }

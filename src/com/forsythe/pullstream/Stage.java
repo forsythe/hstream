@@ -199,6 +199,18 @@ public abstract class Stage implements PullStream {
     }
 
     @Override
+    public OptionalInt reduce(IntBinaryOperator binaryOperator) {
+        if (!hasNext())
+            return OptionalInt.empty();
+        int val = getNext();
+        while (hasNext()) {
+            val = binaryOperator.applyAsInt(val, getNext());
+        }
+        return OptionalInt.of(val);
+    }
+
+
+    @Override
     public List<Integer> toList() {
         List<Integer> ans = new ArrayList<>();
         while (hasNext()) {
