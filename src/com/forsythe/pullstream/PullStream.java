@@ -3,20 +3,12 @@ package com.forsythe.pullstream;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.IntBinaryOperator;
-import java.util.function.IntFunction;
-import java.util.function.IntPredicate;
-import java.util.function.IntUnaryOperator;
+import java.util.function.*;
 
 /**
  * Interface representing a single use lazy stream of integers
  */
 public interface PullStream extends Source, Iterable<Integer> {
-    @FunctionalInterface
-    interface ObjIntBiFunction<T> {
-        T apply(T a, int b);
-    }
-
     static PullStream fromList(List<Integer> input) {
         return new HeadStage(new Source() {
             Iterator<Integer> inputIter = input.iterator();
@@ -83,9 +75,9 @@ public interface PullStream extends Source, Iterable<Integer> {
 
     PullStream skip(int skip);
 
-    int reduce(int identity, IntBinaryOperator reducer);
+    int fold(int identity, IntBinaryOperator reducer);
 
-    <T> T reduce(T identity, ObjIntBiFunction<T> binaryOperator);
+    <T> void fold(T identity, ObjIntConsumer<T> objIntConsumer);
 
     List<Integer> toList();
 }

@@ -89,20 +89,17 @@ class PullStreamTest {
     }
 
     @Test
-    void reduce() {
+    void fold() {
         PullStream counter = PullStream.generator(1, x -> x + 1);
-        int ans = counter.limit(5).reduce(0, (a, b) -> a * 10 + b);
+        int ans = counter.limit(5).fold(0, (a, b) -> a * 10 + b);
         assertEquals(12345, ans);
     }
 
     @Test
-    void reduceObj() {
+    void foldObj() {
         PullStream counter = PullStream.generator(1, x -> x + 1);
         Map<Integer, Integer> count = new HashMap<>();
-        counter.limit(5).reduce(count, (a, b) -> {
-            a.merge(b, 1, Integer::sum);
-            return a;
-        });
+        counter.limit(5).fold(count, (a, b) -> a.merge(b, 1, Integer::sum));
         assertEquals(Map.of(1, 1,
                 2, 1,
                 3, 1,

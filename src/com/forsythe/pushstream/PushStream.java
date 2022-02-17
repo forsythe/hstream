@@ -88,16 +88,16 @@ public interface PushStream extends Sink, Iterable<Integer> {
      * Terminal operations
      **/
 
-    int reduce(int identity, ToIntBiFunction<Integer, Integer> combiner);
+    int fold(int identity, ToIntBiFunction<Integer, Integer> combiner);
 
-    Optional<Integer> reduce(ToIntBiFunction<Integer, Integer> combiner);
+    Optional<Integer> fold(ToIntBiFunction<Integer, Integer> combiner);
 
     default Optional<Integer> max() {
-        return reduce(Math::max);
+        return fold(Math::max);
     }
 
     default Optional<Integer> min() {
-        return reduce(Math::min);
+        return fold(Math::min);
     }
 
     int count();

@@ -83,13 +83,13 @@ class PushStreamTest {
     }
 
     @Test
-    void reduce() {
+    void fold() {
         PushStream hstream = PushStream.fromList(List.of(1, 2, 3, 4));
-        int toPowersOf10 = hstream.reduce(0, (a, b) -> a * 10 + b);
+        int toPowersOf10 = hstream.fold(0, (a, b) -> a * 10 + b);
         assertEquals(1234, toPowersOf10);
 
         PushStream reduceWithoutIdentity = PushStream.fromRange(1, 10);
-        assertEquals(123456789, reduceWithoutIdentity.reduce((a, b) -> a * 10 + b).orElse(-1));
+        assertEquals(123456789, reduceWithoutIdentity.fold((a, b) -> a * 10 + b).orElse(-1));
     }
 
     @Test

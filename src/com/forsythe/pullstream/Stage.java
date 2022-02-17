@@ -1,10 +1,7 @@
 package com.forsythe.pullstream;
 
 import java.util.*;
-import java.util.function.IntBinaryOperator;
-import java.util.function.IntFunction;
-import java.util.function.IntPredicate;
-import java.util.function.IntUnaryOperator;
+import java.util.function.*;
 
 public abstract class Stage implements PullStream {
     protected Source upstream;
@@ -186,7 +183,7 @@ public abstract class Stage implements PullStream {
     }
 
     @Override
-    public int reduce(int identity, IntBinaryOperator reducer) {
+    public int fold(int identity, IntBinaryOperator reducer) {
         int val = identity;
         while (hasNext()) {
             val = reducer.applyAsInt(val, getNext());
@@ -195,12 +192,10 @@ public abstract class Stage implements PullStream {
     }
 
     @Override
-    public <T> T reduce(T identity, ObjIntBiFunction<T> binaryOperator) {
-        T val = identity;
+    public <T> void fold(T identity, ObjIntConsumer<T> consumer) {
         while (hasNext()) {
-            val = binaryOperator.apply(val, getNext());
+            consumer.accept(identity, getNext());
         }
-        return val;
     }
 
     @Override

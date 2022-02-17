@@ -191,7 +191,7 @@ public abstract class Stage implements PushStream {
     }
 
     @Override
-    public int reduce(int identity, ToIntBiFunction<Integer, Integer> combiner) {
+    public int fold(int identity, ToIntBiFunction<Integer, Integer> combiner) {
         TerminalOperatorStage<Integer> tes = new TerminalOperatorStage<>() {
             int value = identity;
 
@@ -231,7 +231,7 @@ public abstract class Stage implements PushStream {
     }
 
     @Override
-    public Optional<Integer> reduce(ToIntBiFunction<Integer, Integer> combiner) {
+    public Optional<Integer> fold(ToIntBiFunction<Integer, Integer> combiner) {
         TerminalOperatorStage<Optional<Integer>> tes = new TerminalOperatorStage<>() {
             boolean sawValue = false;
             int baseVal = 0;
